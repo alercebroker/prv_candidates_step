@@ -48,24 +48,6 @@ class PrvDetectionStep(GenericStep):
         # If is an empiric alert must has stamp
         alerts["has_stamp"] = True
         # Process previous candidates of each alert
-        (
-            dets_from_prv_candidates,
-            _,
-        ) = process_prv_candidates(self.prv_candidates_processor, alerts)
-        # If is an alert from previous candidate hasn't stamps
-        # Concat detections from alerts and detections from previous candidates
-        if dets_from_prv_candidates.empty:
-            detections = alerts.copy()
-            detections["parent_candid"] = np.nan
-        else:
-            dets_from_prv_candidates["has_stamp"] = False
-            detections = pd.concat(
-                [alerts, dets_from_prv_candidates], ignore_index=True
-            )
-        # Remove alerts with the same candid duplicated.
-        # It may be the case that some candids are repeated or some
-        # detections from prv_candidates share the candid.
-        # We use keep='first' for maintain the candid of empiric detections.
-        detections.drop_duplicates(
-            "candid", inplace=True, keep="first", ignore_index=True
-        )
+        prv_candidates = process_prv_candidates(self.prv_candidates_processor, alerts)
+        return prv_candidates.to_dict('records')
+

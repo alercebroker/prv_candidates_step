@@ -38,6 +38,6 @@ class Processor:
 
         # ...
         if len(data):
-            det, non_det = self.strategy.process_prv_candidates(data)
-            return det, non_det
-        return None, None
+            det = self.strategy.process_prv_candidates(data)
+            return det
+        return None

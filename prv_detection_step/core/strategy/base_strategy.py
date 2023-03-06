@@ -12,5 +12,5 @@ class BasePrvCandidatesStrategy(ABC):
     @abstractmethod
     def process_prv_candidates(
         self, data: pd.DataFrame
-    ) -> Tuple[pd.DataFrame, pd.DataFrame]:
+    ) -> pd.DataFrame:
         pass

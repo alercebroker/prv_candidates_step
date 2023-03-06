@@ -6,8 +6,8 @@ from prv_detection_step.core.strategy.ztf_strategy import ZTFPrvCandidatesStrate
 
 
 def process_prv_candidates(
-    processor: Processor, alerts: Tuple[pd.DataFrame, pd.DataFrame]
-) -> Tuple[pd.DataFrame, pd.DataFrame]:
+    processor: Processor, alerts: pd.DataFrame
+) -> pd.DataFrame:
     """Separate previous candidates from alerts.
 
     The input must be a DataFrame created from a list of GenericAlert.
@@ -23,7 +23,7 @@ def process_prv_candidates(
     # dicto = {
     #     "ZTF": ZTFPrvCandidatesStrategy()
     # }
-    data = alerts[["aid", "oid", "tid", "candid", "ra", "dec", "pid", "extra_fields"]]
+    data = alerts[["aid", "oid", "tid", "pid", "candid", "mjd", "fid", "ra", "dec", "rb", "rbversion", "mag", "e_mag", "rfid", "isdiffpos", "e_ra", "e_dec", "extra_fields"]]
     detections = []
     non_detections = []
     for tid, subset_data in data.groupby("tid"):
@@ -33,9 +33,5 @@ def process_prv_candidates(
             processor.strategy = ATLASPrvCandidatesStrategy()
         else:
             raise ValueError(f"Unknown Survey {tid}")
-        det, non_det = processor.compute(subset_data)
-        detections.append(det)
-        non_detections.append(non_det)
-    detections = pd.concat(detections, ignore_index=True)
-    non_detections = pd.concat(non_detections, ignore_index=True)
-    return detections, non_detections
+        det = processor.compute(subset_data)
+    return det

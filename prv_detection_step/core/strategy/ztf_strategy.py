@@ -5,7 +5,7 @@ import pickle
 from prv_detection_step.core.strategy.base_strategy import BasePrvCandidatesStrategy
 
 # Keys used on non detections for ZTF
-NON_DET_KEYS = ["aid", "tid", "oid", "mjd", "diffmaglim", "fid"]
+NON_DET_KEYS = ["mjd", "diffmaglim", "fid"]
 
 
 # Implementation a new parser for PreviousCandidates with SurveyParser signs.
@@ -34,20 +34,12 @@ class ZTFPreviousCandidatesParser(SurveyParser):
     def parse_message(cls, message: dict) -> dict:
         if not cls.can_parse(message):
             raise KeyError("This parser can't parse message")
-        oid = message["objectId"]
-        prv_candidate = message["candidate"]
         prv_content = cls._generic_alert_message(
-            prv_candidate, cls._generic_alert_message_key_mapping
+            message, cls._generic_alert_message_key_mapping
         )
-        # inclusion of extra attributes
-        prv_content["oid"] = oid
-        # prv_content["aid"] = id_generator(prv_content["ra"], prv_content["dec"])
-        prv_content["aid"] = message["aid"]
-        prv_content["tid"] = cls._source
         # attributes modification
         prv_content["mjd"] = prv_content["mjd"] - 2400000.5
         prv_content["isdiffpos"] = 1 if prv_content["isdiffpos"] in ["t", "1"] else -1
-        prv_content["parent_candid"] = message["parent_candid"]
         e_radec = cls._celestial_errors[prv_content["fid"]]
         prv_content["e_ra"] = (
             prv_content["sigmara"] if "sigmara" in prv_content else e_radec
@@ -59,7 +51,7 @@ class ZTFPreviousCandidatesParser(SurveyParser):
 
     @classmethod
     def can_parse(cls, message: dict) -> bool:
-        return "publisher" in message.keys() and cls._source in message["publisher"]
+        return True
 
     @classmethod
     def parse(cls, messages: List[dict]) -> List[dict]:
@@ -68,45 +60,32 @@ class ZTFPreviousCandidatesParser(SurveyParser):
 
 class ZTFPrvCandidatesStrategy(BasePrvCandidatesStrategy):
     def process_prv_candidates(self, alerts: pd.DataFrame):
-        detections = {}
-        non_detections = []
+        prv_objects = []
         for index, alert in alerts.iterrows():
-            oid = alert["oid"]
-            tid = alert["tid"]
-            aid = alert["aid"]
+            prv_object = {}
+            prv_object["new_alert"] = alert.to_dict()
+            detections = []
+            non_detections = []
             candid = alert["candid"]
             if alert["extra_fields"]["prv_candidates"] is not None:
                 prv_candidates = pickle.loads(alert["extra_fields"]["prv_candidates"])
                 for prv in prv_candidates:
                     if prv["candid"] is None:
-                        prv["aid"] = aid
-                        prv["oid"] = oid
-                        prv["tid"] = tid
                         non_detections.append(prv)
                     else:
-                        detections.update(
-                            {
-                                prv["candid"]: {
-                                    "objectId": oid,
-                                    "publisher": tid,
-                                    "aid": aid,
-                                    "candidate": prv,
-                                    "parent_candid": candid,
-                                }
-                            }
-                        )
+                        detections.append(prv)
                 del alert["extra_fields"]["prv_candidates"]
-        detections = ZTFPreviousCandidatesParser.parse(list(detections.values()))
-        detections = pd.DataFrame(detections)
-        non_detections = (
-            pd.DataFrame(non_detections)
-            if len(non_detections)
-            else pd.DataFrame(columns=NON_DET_KEYS)
-        )
+                detections = ZTFPreviousCandidatesParser.parse(detections) # no se parsean nunca
+                non_detections = (
+                    pd.DataFrame(non_detections)
+                    if len(non_detections)
+                    else pd.DataFrame(columns=NON_DET_KEYS)
+                )
 
-        if len(non_detections):
-            non_detections.rename({"objectId": "oid"}, inplace=True)
-            non_detections["mjd"] = non_detections["jd"] - 2400000.5
-            non_detections = non_detections[NON_DET_KEYS]
-            non_detections = non_detections.drop_duplicates(["oid", "fid", "mjd"])
-        return detections, non_detections
+                if len(non_detections):
+                    non_detections["mjd"] = non_detections["jd"] - 2400000.5
+                    non_detections = non_detections[NON_DET_KEYS]
+                prv_object["prv_detections"] = detections
+                prv_object["non_detections"] = non_detections.to_dict('records')
+            prv_objects.append(prv_object)
+        return pd.DataFrame(prv_objects)
