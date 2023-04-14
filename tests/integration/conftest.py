@@ -65,6 +65,7 @@ def env_variables():
         "PRODUCER_TOPIC": "prv-candidates",
         "ENABLE_PARTITION_EOF": "True",
         "SCRIBE_PRODUCER_TOPIC": "w_non_detections",
+        "SCRIBE_PRODUCER_SERVER": "localhost:9092",
     }
     for key in env_variables_dict:
         os.environ[key] = env_variables_dict[key]

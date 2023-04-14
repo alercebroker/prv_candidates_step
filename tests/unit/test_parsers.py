@@ -17,6 +17,7 @@ def test_prv_detections_parser():
     assert result[0]["aid"] == "aid"
     assert result[0]["oid"] == "oid"
     assert result[0]["extra_fields"]["parent_candid"] == "parent_candid"
+    assert result[0]["has_stamp"] == False
 
 
 def test_non_detections_parser():
