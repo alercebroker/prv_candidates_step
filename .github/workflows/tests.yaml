@@ -24,6 +24,6 @@ jobs:
       python-version: "3.10"
       sources-folder: "prv_candidates_step"
       test-folder: "tests/integration"
-      test-dependencies: "pytest pytest-docker pytest-mock"
+      test-dependencies: "pytest pytest-cov pytest-docker pytest-mock"
       codecov-flags: "" # Do not upload
       test-command: "python -m pytest -x tests/integration"

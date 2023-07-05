@@ -22,3 +22,23 @@ the incoming alert. Other functions or classes are possible. The aforementioned 
 ```
 
 **Important:** For everything to work, remember to import the module in the `__init__.py` file of `core.strategy`.
+
+### Using Poetry to manage dependencies
+
+Poetry is configured to manage all dependencies in three groups: main, dev and test. 
+
+#### Set-up poetry:
+- Install poetry: `pip install poetry`
+- If you want to set create `.venv` environment in the project folder: `poetry config virtualenvs.in-project true`
+- Create environment with all dependencies (main, dev and test): `poetry install`
+- To install only main dependencies: `poetry install --only main`
+- Show tree of dependencies: `poetry show --tree`
+- Add a new dependency 
+  - `poetry add PACKAGE`
+  - `poetry add -G dev PACKAGE`
+  - `poetry add -G test PACKAGE`
+
+#### Run tests
+- Run all tests : `poetry run pytest`
+- Run only unit test: `poetry run pytest tests/unittest`
+- Run only integration tests: `poetry run pytest tests/integration`
